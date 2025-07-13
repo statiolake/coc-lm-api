@@ -4,7 +4,6 @@ import { ToolManager } from './tools';
 import type {
   CancellationToken,
   Disposable,
-  Event,
   LanguageModelChat,
   LanguageModelChatSelector,
   LanguageModelTool,
@@ -19,17 +18,12 @@ export type {
   Disposable,
   Event,
   LanguageModelChat,
-  LanguageModelChatMessage,
-  LanguageModelChatMessageRole,
   LanguageModelChatRequestOptions,
   LanguageModelChatResponse,
   LanguageModelChatSelector,
   LanguageModelChatTool,
   LanguageModelChatToolMode,
-  LanguageModelError,
-  LanguageModelTextPart,
   LanguageModelTool,
-  LanguageModelToolCallPart,
   LanguageModelToolInformation,
   LanguageModelToolInvocationOptions,
   LanguageModelToolInvocationToken,
@@ -38,7 +32,16 @@ export type {
   LmApi,
 } from './types';
 
-export function createLmApi(): LmApi {
+// Re-export classes and enums for external use
+export {
+  LanguageModelChatMessage,
+  LanguageModelChatMessageRole,
+  LanguageModelError,
+  LanguageModelTextPart,
+  LanguageModelToolCallPart,
+} from './types';
+
+function createLmApi(): LmApi {
   const toolManager = new ToolManager();
   const modelManager = new ModelManager();
 
@@ -81,7 +84,10 @@ export function createLmApi(): LmApi {
   };
 }
 
-export async function activate(context: ExtensionContext): Promise<LmApi> {
+export async function activate(_context: ExtensionContext): Promise<LmApi> {
+  console.log('LM API extension activation started');
   const lmApi = createLmApi();
+  console.log('LM API: Created lmApi instance');
+  console.log('LM API extension activation completed');
   return lmApi;
 }

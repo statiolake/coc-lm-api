@@ -8,7 +8,13 @@ export class ModelManager {
   readonly onDidChangeChatModels: Event<void> = this._onDidChangeChatModels.event;
 
   register(model: LanguageModelChat): void {
+    console.log(
+      `LM API: Registering model ${model.id} (vendor: ${model.vendor}, family: ${model.family})`
+    );
     this.models.set(model.id, model);
+    console.log(
+      `LM API: Model ${model.id} registered successfully. Total models: ${this.models.size}`
+    );
     this._onDidChangeChatModels.fire();
   }
 
@@ -21,9 +27,11 @@ export class ModelManager {
   }
 
   select(selector: LanguageModelChatSelector = {}): LanguageModelChat[] {
+    console.log('LM API: Selecting models with selector:', selector);
     const allModels = Array.from(this.models.values());
+    console.log(`LM API: Total available models: ${allModels.length}`);
 
-    return allModels.filter((model) => {
+    const filteredModels = allModels.filter((model) => {
       if (selector.vendor && model.vendor !== selector.vendor) {
         return false;
       }
@@ -38,6 +46,12 @@ export class ModelManager {
       }
       return true;
     });
+
+    console.log(
+      `LM API: Selected ${filteredModels.length} models:`,
+      filteredModels.map((m) => m.id)
+    );
+    return filteredModels;
   }
 
   getAll(): LanguageModelChat[] {
