@@ -1,5 +1,5 @@
-import { Emitter } from 'coc.nvim';
-import type { Event, LanguageModelChat, LanguageModelChatSelector } from './types';
+import { type Disposable, Emitter, type Event } from 'coc.nvim';
+import type { LanguageModelChat, LanguageModelChatSelector } from './types';
 
 export class ModelManager {
   private models = new Map<string, LanguageModelChat>();
@@ -7,29 +7,33 @@ export class ModelManager {
 
   readonly onDidChangeChatModels: Event<void> = this._onDidChangeChatModels.event;
 
-  register(model: LanguageModelChat): void {
-    console.log(
-      `LM API: Registering model ${model.id} (vendor: ${model.vendor}, family: ${model.family})`
-    );
+  register(model: LanguageModelChat): Disposable {
+    console.log('LM API: Registering model:', model);
     this.models.set(model.id, model);
-    console.log(
-      `LM API: Model ${model.id} registered successfully. Total models: ${this.models.size}`
-    );
+    console.log(`LM API: Model ${model.id} registered successfully`);
     this._onDidChangeChatModels.fire();
+
+    return {
+      dispose: () => this.unregister(model.id),
+    };
   }
 
   unregister(modelId: string): boolean {
+    console.log(`LM API: Unregistering model ${modelId}`);
     const existed = this.models.delete(modelId);
-    if (existed) {
-      this._onDidChangeChatModels.fire();
+    if (!existed) {
+      console.log(`LM API: Model ${modelId} not found for unregistration`);
+      return false;
     }
-    return existed;
+
+    console.log(`LM API: Model ${modelId} unregistered successfully`);
+    this._onDidChangeChatModels.fire();
+    return true;
   }
 
   select(selector: LanguageModelChatSelector = {}): LanguageModelChat[] {
     console.log('LM API: Selecting models with selector:', selector);
     const allModels = Array.from(this.models.values());
-    console.log(`LM API: Total available models: ${allModels.length}`);
 
     const filteredModels = allModels.filter((model) => {
       if (selector.vendor && model.vendor !== selector.vendor) {

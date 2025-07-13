@@ -1,9 +1,7 @@
-import type { ExtensionContext } from 'coc.nvim';
+import type { CancellationToken, Disposable, ExtensionContext } from 'coc.nvim';
 import { ModelManager } from './models';
 import { ToolManager } from './tools';
 import type {
-  CancellationToken,
-  Disposable,
   LanguageModelChat,
   LanguageModelChatSelector,
   LanguageModelTool,
@@ -14,9 +12,6 @@ import type {
 
 // Re-export types for external use
 export type {
-  CancellationToken,
-  Disposable,
-  Event,
   LanguageModelChat,
   LanguageModelChatRequestOptions,
   LanguageModelChatResponse,
@@ -47,27 +42,11 @@ function createLmApi(): LmApi {
 
   return {
     get tools() {
-      return toolManager.tools;
+      return toolManager.getAll().map((tool) => tool.information);
     },
 
     get onDidChangeChatModels() {
       return modelManager.onDidChangeChatModels;
-    },
-
-    selectChatModels: async (selector: LanguageModelChatSelector = {}) => {
-      return modelManager.select(selector);
-    },
-
-    registerTool: <T>(name: string, tool: LanguageModelTool<T>): Disposable => {
-      return toolManager.registerTool(name, tool);
-    },
-
-    invokeTool: async (
-      name: string,
-      options: LanguageModelToolInvocationOptions<object>,
-      token?: CancellationToken
-    ): Promise<LanguageModelToolResult> => {
-      return toolManager.invokeTool(name, options, token);
     },
 
     registerChatModel: (model: LanguageModelChat) => {
@@ -81,13 +60,36 @@ function createLmApi(): LmApi {
     getRegisteredModels: () => {
       return modelManager.getAll();
     },
+
+    selectChatModels: async (selector: LanguageModelChatSelector = {}) => {
+      return modelManager.select(selector);
+    },
+
+    registerTool: <T>(name: string, tool: LanguageModelTool<T>): Disposable => {
+      // Actually, the `name` parameter is redundant with the current
+      // coc-lm-api API interface since we have `tool.information.name`. The
+      // signature is kept for compatibility with VS Code's LM API, where the
+      // tool information isn't given in tool definition (instead it is given
+      // as a one of contributions in package.json.)
+      if (name !== tool.information.name) {
+        throw new Error(
+          `Tool name '${name}' does not match tool information name '${tool.information.name}'`
+        );
+      }
+
+      return toolManager.register(tool);
+    },
+
+    invokeTool: async (
+      name: string,
+      options: LanguageModelToolInvocationOptions<object>,
+      token?: CancellationToken
+    ): Promise<LanguageModelToolResult> => {
+      return toolManager.invoke(name, options, token);
+    },
   };
 }
 
 export async function activate(_context: ExtensionContext): Promise<LmApi> {
-  console.log('LM API extension activation started');
-  const lmApi = createLmApi();
-  console.log('LM API: Created lmApi instance');
-  console.log('LM API extension activation completed');
-  return lmApi;
+  return createLmApi();
 }

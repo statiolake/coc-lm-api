@@ -1,31 +1,28 @@
 // Language Model API Types - Maintains compatibility with VS Code lm namespace for extension interoperability
 
-export type { CancellationToken, Disposable, Event } from 'coc.nvim';
-
 import type { CancellationToken, Disposable, Event } from 'coc.nvim';
 
 interface Thenable<T> extends PromiseLike<T> {}
 
 /**
  * Language Model API Interface
- * 
+ *
  * Core Language Model API for coc.nvim extensions with model management capabilities.
  */
 export interface LmApi {
   readonly tools: readonly LanguageModelToolInformation[];
   readonly onDidChangeChatModels: Event<void>;
+  registerChatModel(model: LanguageModelChat): void;
+  unregisterChatModel(modelId: string): boolean;
+  getRegisteredModels(): LanguageModelChat[];
   selectChatModels(selector?: LanguageModelChatSelector): Thenable<LanguageModelChat[]>;
+
   registerTool<T>(name: string, tool: LanguageModelTool<T>): Disposable;
   invokeTool(
     name: string,
     options: LanguageModelToolInvocationOptions<object>,
     token?: CancellationToken
   ): Thenable<LanguageModelToolResult>;
-  
-  // Model management methods
-  registerChatModel(model: LanguageModelChat): void;
-  unregisterChatModel(modelId: string): boolean;
-  getRegisteredModels(): LanguageModelChat[];
 }
 
 export interface LanguageModelChatSelector {
