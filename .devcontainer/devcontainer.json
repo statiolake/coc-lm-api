@@ -1,0 +1,16 @@
+{
+  "name": "Development Container",
+  "dockerComposeFile": "compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspace",
+  "remoteUser": "node",
+
+  "customizations": {
+    "vscode": {
+      "extensions": ["ms-vscode.vscode-json"]
+    }
+  },
+  "postCreateCommand": "echo 'Container is ready!'",
+  "forwardPorts": [],
+  "portsAttributes": {}
+}

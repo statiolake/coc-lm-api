@@ -1,0 +1,89 @@
+{
+  "name": "@statiolake/coc-lm-api",
+  "version": "1.0.0",
+  "description": "Language Model API interface for coc.nvim extensions",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "activationEvents": [
+    "*"
+  ],
+  "contributes": {
+    "configuration": {
+      "type": "object",
+      "title": "Language Model API configuration",
+      "properties": {
+        "copilot.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable GitHub Copilot"
+        },
+        "copilot.trace.server": {
+          "type": "string",
+          "default": "off",
+          "enum": [
+            "off",
+            "messages",
+            "trace"
+          ],
+          "description": "Trace GitHub Copilot Language Server communication"
+        }
+      }
+    },
+    "commands": []
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "lint": "biome lint . && npm run lint:casts",
+    "lint:fix": "biome lint --fix .",
+    "check": "biome check .",
+    "check:fix": "biome check --fix .",
+    "lint:casts": "node scripts/check-type-casts.js",
+    "lint:all": "npm run lint && npm run lint:casts",
+    "prepare": "husky",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "coc.nvim",
+    "language-model",
+    "api",
+    "ai",
+    "interface"
+  ],
+  "author": "statiolake",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/statiolake/coc-github-copilot.git"
+  },
+  "bugs": {
+    "url": "https://github.com/statiolake/coc-github-copilot/issues"
+  },
+  "homepage": "https://github.com/statiolake/coc-github-copilot#readme",
+  "engines": {
+    "coc": "^0.0.82"
+  },
+  "type": "commonjs",
+  "devDependencies": {
+    "@biomejs/biome": "^2.0.6",
+    "@types/node": "^20.0.0",
+    "coc.nvim": "^0.0.83-next.9",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.2",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@github/copilot-language-server": "^1.338.0",
+    "zod": "^3.25.76"
+  },
+  "lint-staged": {
+    "*.{ts,js,json}": [
+      "biome check --fix --no-errors-on-unmatched"
+    ]
+  }
+}
