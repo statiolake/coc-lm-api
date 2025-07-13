@@ -1,89 +1,157 @@
-# @statiolake/coc-github-copilot
+# @statiolake/coc-lm-api
 
-GitHub Copilot extension for coc.nvim using the official GitHub Copilot Language Server.
+Language Model API interface for coc.nvim extensions that provides a unified interface for accessing and managing language models.
+
+## Overview
+
+This extension provides a bridge between language model providers and consumer extensions, allowing for a clean separation of concerns and standardized API access.
 
 ## Features
 
-- 🤖 GitHub Copilot integration with coc.nvim
-- 🔐 Device authentication flow
-- ⚡ Automatic inline completions via Language Server
-- 🛠️ Simple configuration
-- 🔌 Seamless Language Server integration
+- **Unified Language Model Interface**: Standardized API for chat models across different providers
+- **Tool System**: Framework for registering and invoking tools that language models can use
+- **Model Management**: Registration and selection of available language models
+- **Type Safety**: Full TypeScript support with comprehensive type definitions
 
 ## Installation
 
-### From npm
-
 ```bash
-npm install -g @statiolake/coc-github-copilot
+:CocInstall @statiolake/coc-lm-api
 ```
 
-Or in Vim/Neovim:
+## API Overview
 
-```vim
-:CocInstall @statiolake/coc-github-copilot
+### Core Interfaces
+
+#### `LanguageModelChat`
+Interface for chat-capable language models with streaming support:
+
+```typescript
+interface LanguageModelChat {
+  readonly id: string;
+  readonly vendor: string;
+  readonly family: string;
+  
+  sendRequest(
+    messages: LanguageModelChatMessage[],
+    options?: LanguageModelChatRequestOptions,
+    token?: CancellationToken
+  ): Promise<LanguageModelChatResponse>;
+}
 ```
 
-### Prerequisites
+#### `LmApi`
+Main API interface for extension integration:
 
-- [coc.nvim](https://github.com/neoclide/coc.nvim) 0.0.82+
-- Node.js 16+
-- GitHub Copilot subscription
-
-## Setup
-
-1. Install the extension
-2. Run `:CocCommand copilot.signIn` to authenticate with GitHub
-3. Follow the device authentication flow
-4. Start coding with Copilot suggestions!
-
-## Commands
-
-- `:CocCommand copilot.signIn` - Sign in to GitHub Copilot
-- `:CocCommand copilot.signOut` - Sign out from GitHub Copilot
-- `:CocCommand copilot.status` - Show current authentication status
-- `:CocCommand copilot.enable` - Enable Copilot suggestions
-- `:CocCommand copilot.disable` - Disable Copilot suggestions
-
-## Configuration
-
-The extension works out of the box with minimal configuration. All settings are managed through the Language Server.
-
-## Usage
-
-Once authenticated and enabled, Copilot will automatically provide completions in the coc.nvim completion menu.
-
-## Development
-
-```bash
-# Clone the repository
-git clone https://github.com/statiolake/coc-github-copilot.git
-cd coc-github-copilot
-
-# Install dependencies
-npm install
-
-# Build
-npm run build
-
-# Watch mode for development
-npm run watch
+```typescript
+interface LmApi {
+  // Model management
+  registerChatModel(model: LanguageModelChat): void;
+  selectChatModels(selector?: LanguageModelChatSelector): LanguageModelChat[];
+  
+  // Tool system
+  registerTool(name: string, tool: LanguageModelTool): void;
+  invokeTool(name: string, options: LanguageModelToolInvocationOptions): Promise<LanguageModelToolResult>;
+  
+  // Event handling
+  onDidChangeChatModels: Event<void>;
+}
 ```
 
-## Contributing
+### Message System
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+Messages support rich content types:
+
+```typescript
+class LanguageModelChatMessage {
+  static User(content: Array<LanguageModelTextPart | LanguageModelToolResultPart>): LanguageModelChatMessage;
+  static Assistant(content: Array<LanguageModelTextPart | LanguageModelToolCallPart>): LanguageModelChatMessage;
+}
+```
+
+### Tool System
+
+Register tools that language models can invoke:
+
+```typescript
+lmApi.registerTool('getCurrentTime', {
+  name: 'getCurrentTime',
+  description: 'Get the current date and time',
+  inputSchema: {
+    type: 'object',
+    properties: {}
+  },
+  invoke: async () => {
+    return {
+      content: [new LanguageModelTextPart(new Date().toISOString())]
+    };
+  }
+});
+```
+
+## Usage for Extension Developers
+
+### Accessing the API
+
+```typescript
+import type { LmApi } from '@statiolake/coc-lm-api';
+
+export async function activate(context: ExtensionContext): Promise<void> {
+  // Get LM API from the extension
+  const lmApiExtension: Extension<LmApi> = extensions.getExtensionById('@statiolake/coc-lm-api');
+  const lmApi: LmApi = lmApiExtension.exports;
+  
+  // Use the API...
+}
+```
+
+### Registering a Language Model
+
+```typescript
+class MyLanguageModel implements LanguageModelChat {
+  readonly id = 'my-model';
+  readonly vendor = 'MyProvider';
+  readonly family = 'my-family';
+  
+  async sendRequest(messages, options, token) {
+    // Implement your model logic
+  }
+}
+
+lmApi.registerChatModel(new MyLanguageModel());
+```
+
+### Using Language Models
+
+```typescript
+const models = lmApi.selectChatModels({ vendor: 'GitHub' });
+if (models.length > 0) {
+  const response = await models[0].sendRequest([
+    LanguageModelChatMessage.User([
+      new LanguageModelTextPart('Hello, how are you?')
+    ])
+  ]);
+  
+  // Process streaming response
+  for await (const part of response.stream) {
+    if (part instanceof LanguageModelTextPart) {
+      console.log(part.value);
+    }
+  }
+}
+```
+
+## Extension Dependencies
+
+This extension serves as a foundation for other language model extensions:
+
+- **[@statiolake/coc-github-copilot](https://www.npmjs.com/package/@statiolake/coc-github-copilot)**: GitHub Copilot integration
+- **[@statiolake/coc-lm-chat](https://www.npmjs.com/package/@statiolake/coc-lm-chat)**: Interactive chat interface
 
 ## License
 
-MIT License
+MIT
 
-## Acknowledgments
+## Repository
 
-- [GitHub Copilot](https://github.com/features/copilot) for the AI assistance
-- [coc.nvim](https://github.com/neoclide/coc.nvim) for the extension framework
-- [@github/copilot-language-server](https://www.npmjs.com/package/@github/copilot-language-server) for the language server
+[GitHub](https://github.com/statiolake/coc-github-copilot)
