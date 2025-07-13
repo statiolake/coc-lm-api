@@ -24,6 +24,7 @@ This extension provides a bridge between language model providers and consumer e
 ### Core Interfaces
 
 #### `LanguageModelChat`
+
 Interface for chat-capable language models with streaming support:
 
 ```typescript
@@ -31,16 +32,17 @@ interface LanguageModelChat {
   readonly id: string;
   readonly vendor: string;
   readonly family: string;
-  
+
   sendRequest(
     messages: LanguageModelChatMessage[],
     options?: LanguageModelChatRequestOptions,
-    token?: CancellationToken
+    token?: CancellationToken,
   ): Promise<LanguageModelChatResponse>;
 }
 ```
 
 #### `LmApi`
+
 Main API interface for extension integration:
 
 ```typescript
@@ -48,11 +50,14 @@ interface LmApi {
   // Model management
   registerChatModel(model: LanguageModelChat): void;
   selectChatModels(selector?: LanguageModelChatSelector): LanguageModelChat[];
-  
+
   // Tool system
   registerTool(name: string, tool: LanguageModelTool): void;
-  invokeTool(name: string, options: LanguageModelToolInvocationOptions): Promise<LanguageModelToolResult>;
-  
+  invokeTool(
+    name: string,
+    options: LanguageModelToolInvocationOptions,
+  ): Promise<LanguageModelToolResult>;
+
   // Event handling
   onDidChangeChatModels: Event<void>;
 }
@@ -64,8 +69,12 @@ Messages support rich content types:
 
 ```typescript
 class LanguageModelChatMessage {
-  static User(content: Array<LanguageModelTextPart | LanguageModelToolResultPart>): LanguageModelChatMessage;
-  static Assistant(content: Array<LanguageModelTextPart | LanguageModelToolCallPart>): LanguageModelChatMessage;
+  static User(
+    content: Array<LanguageModelTextPart | LanguageModelToolResultPart>,
+  ): LanguageModelChatMessage;
+  static Assistant(
+    content: Array<LanguageModelTextPart | LanguageModelToolCallPart>,
+  ): LanguageModelChatMessage;
 }
 ```
 
@@ -74,18 +83,18 @@ class LanguageModelChatMessage {
 Register tools that language models can invoke:
 
 ```typescript
-lmApi.registerTool('getCurrentTime', {
-  name: 'getCurrentTime',
-  description: 'Get the current date and time',
+lmApi.registerTool("getCurrentTime", {
+  name: "getCurrentTime",
+  description: "Get the current date and time",
   inputSchema: {
-    type: 'object',
-    properties: {}
+    type: "object",
+    properties: {},
   },
   invoke: async () => {
     return {
-      content: [new LanguageModelTextPart(new Date().toISOString())]
+      content: [new LanguageModelTextPart(new Date().toISOString())],
     };
-  }
+  },
 });
 ```
 
@@ -94,13 +103,15 @@ lmApi.registerTool('getCurrentTime', {
 ### Accessing the API
 
 ```typescript
-import type { LmApi } from '@statiolake/coc-lm-api';
+import type { LmApi } from "@statiolake/coc-lm-api";
 
 export async function activate(context: ExtensionContext): Promise<void> {
   // Get LM API from the extension
-  const lmApiExtension: Extension<LmApi> = extensions.getExtensionById('@statiolake/coc-lm-api');
+  const lmApiExtension: Extension<LmApi> = extensions.getExtensionById(
+    "@statiolake/coc-lm-api",
+  );
   const lmApi: LmApi = lmApiExtension.exports;
-  
+
   // Use the API...
 }
 ```
@@ -109,10 +120,10 @@ export async function activate(context: ExtensionContext): Promise<void> {
 
 ```typescript
 class MyLanguageModel implements LanguageModelChat {
-  readonly id = 'my-model';
-  readonly vendor = 'MyProvider';
-  readonly family = 'my-family';
-  
+  readonly id = "my-model";
+  readonly vendor = "MyProvider";
+  readonly family = "my-family";
+
   async sendRequest(messages, options, token) {
     // Implement your model logic
   }
@@ -124,14 +135,14 @@ lmApi.registerChatModel(new MyLanguageModel());
 ### Using Language Models
 
 ```typescript
-const models = lmApi.selectChatModels({ vendor: 'GitHub' });
+const models = lmApi.selectChatModels({ vendor: "GitHub" });
 if (models.length > 0) {
   const response = await models[0].sendRequest([
     LanguageModelChatMessage.User([
-      new LanguageModelTextPart('Hello, how are you?')
-    ])
+      new LanguageModelTextPart("Hello, how are you?"),
+    ]),
   ]);
-  
+
   // Process streaming response
   for await (const part of response.stream) {
     if (part instanceof LanguageModelTextPart) {
