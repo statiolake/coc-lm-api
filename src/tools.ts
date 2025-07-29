@@ -7,6 +7,7 @@ import {
   Emitter,
   type Event,
 } from 'coc.nvim';
+import { channel } from './log';
 import type {
   LanguageModelTool,
   LanguageModelToolInvocationOptions,
@@ -20,9 +21,9 @@ export class ToolManager {
   readonly onDidChangeTools: Event<void> = this._onDidChangeTools.event;
 
   register<T>(tool: LanguageModelTool<T>): Disposable {
-    console.log('LM API: Registering tool:', tool);
+    channel.appendLine(`LM API: Registering tool: ${tool.information.name}`);
     this.tools.set(tool.information.name, tool);
-    console.log(`LM API: Tool '${tool.information.name}' registered successfully`);
+    channel.appendLine(`LM API: Tool '${tool.information.name}' registered successfully`);
     this._onDidChangeTools.fire();
 
     return {
@@ -31,14 +32,14 @@ export class ToolManager {
   }
 
   unregister(name: string): boolean {
-    console.log(`LM API: Unregistering tool '${name}'`);
+    channel.appendLine(`LM API: Unregistering tool '${name}'`);
     const existed = this.tools.delete(name);
     if (!existed) {
-      console.log(`LM API: Tool '${name}' not found for unregistration`);
+      channel.appendLine(`LM API: Tool '${name}' not found for unregistration`);
       return false;
     }
 
-    console.log(`LM API: Tool '${name}' unregistered successfully`);
+    channel.appendLine(`LM API: Tool '${name}' unregistered successfully`);
     this._onDidChangeTools.fire();
     return true;
   }
@@ -56,7 +57,7 @@ export class ToolManager {
       throw new Error('Tool invocation was cancelled');
     }
 
-    console.log(`LM API: Invoking tool '${name}' with options:`, options);
+    channel.appendLine(`LM API: Invoking tool '${name}' with options: ${JSON.stringify(options)}`);
     return await tool.invoke(options, token ?? new CancellationTokenSource().token);
   }
 

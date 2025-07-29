@@ -1,4 +1,5 @@
 import { type Disposable, Emitter, type Event } from 'coc.nvim';
+import { channel } from './log';
 import type { LanguageModelChat, LanguageModelChatSelector } from './types';
 
 export class ModelManager {
@@ -8,9 +9,9 @@ export class ModelManager {
   readonly onDidChangeChatModels: Event<void> = this._onDidChangeChatModels.event;
 
   register(model: LanguageModelChat): Disposable {
-    console.log('LM API: Registering model:', model);
+    channel.appendLine(`LM API: Registering model: ${model.id}`);
     this.models.set(model.id, model);
-    console.log(`LM API: Model ${model.id} registered successfully`);
+    channel.appendLine(`LM API: Model ${model.id} registered successfully`);
     this._onDidChangeChatModels.fire();
 
     return {
@@ -19,20 +20,20 @@ export class ModelManager {
   }
 
   unregister(modelId: string): boolean {
-    console.log(`LM API: Unregistering model ${modelId}`);
+    channel.appendLine(`LM API: Unregistering model ${modelId}`);
     const existed = this.models.delete(modelId);
     if (!existed) {
-      console.log(`LM API: Model ${modelId} not found for unregistration`);
+      channel.appendLine(`LM API: Model ${modelId} not found for unregistration`);
       return false;
     }
 
-    console.log(`LM API: Model ${modelId} unregistered successfully`);
+    channel.appendLine(`LM API: Model ${modelId} unregistered successfully`);
     this._onDidChangeChatModels.fire();
     return true;
   }
 
   select(selector: LanguageModelChatSelector = {}): LanguageModelChat[] {
-    console.log('LM API: Selecting models with selector:', selector);
+    channel.appendLine(`LM API: Selecting models with selector: ${JSON.stringify(selector)}`);
     const allModels = Array.from(this.models.values());
 
     const filteredModels = allModels.filter((model) => {
@@ -51,9 +52,8 @@ export class ModelManager {
       return true;
     });
 
-    console.log(
-      `LM API: Selected ${filteredModels.length} models:`,
-      filteredModels.map((m) => m.id)
+    channel.appendLine(
+      `LM API: Selected ${filteredModels.length} models: ${filteredModels.map((m) => m.id).join(', ')}`
     );
     return filteredModels;
   }
